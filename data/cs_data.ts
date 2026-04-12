@@ -1,0 +1,160 @@
+import { Monitor } from 'lucide-react';
+import { SubjectData, SubjectType } from '../types';
+
+export const csData: SubjectData = {
+  id: 'cs',
+  name: SubjectType.CS,
+  icon: Monitor,
+  color: 'indigo',
+  hex: '#6366f1',
+  description: 'Visualise sorting algorithms, data structures, and logic gates through animated 2D simulations for Karnataka PUC.',
+  labs: [
+    {
+      id: 'cs1',
+      title: 'Bubble Sort Visualiser',
+      description: 'Visualise the Bubble Sort algorithm step-by-step with animated bar comparisons and swaps.',
+      difficulty: 'Easy',
+      duration: '20 min',
+      category: 'Sorting Algorithms',
+      boards: ['Karnataka PUC'],
+      standards: ['2nd PUC / Class 12'],
+      content: {
+        aim: 'To visualise the Bubble Sort algorithm and understand its working, time complexity, and behaviour on different inputs.',
+        requirements: ['Interactive sorting visualiser'],
+        theory: 'Bubble Sort repeatedly steps through the list, compares adjacent elements, and swaps them if they are in the wrong order. The pass through the list is repeated until no swaps are needed (list is sorted). Time complexity: Best O(n) [already sorted], Average O(n²), Worst O(n²). Space complexity: O(1) — in-place sorting.',
+        procedure: [
+          'Generate a random array of numbers.',
+          'Step through the algorithm: observe which elements are compared.',
+          'Count the number of comparisons and swaps.',
+          'Try with a sorted array — observe best case.',
+          'Try with a reverse-sorted array — observe worst case.',
+          'Compare the number of operations.',
+        ],
+        objectives: ['Understand Bubble Sort algorithm', 'Analyse time complexity', 'Compare best/worst cases'],
+        observationTable: { columns: ['Input type', 'Array size', 'Comparisons', 'Swaps', 'Time complexity'], rows: 4 },
+      }
+    },
+    {
+      id: 'cs2',
+      title: 'Insertion Sort Visualiser',
+      description: 'Visualise Insertion Sort building a sorted portion one element at a time.',
+      difficulty: 'Easy',
+      duration: '20 min',
+      category: 'Sorting Algorithms',
+      boards: ['Karnataka PUC'],
+      standards: ['2nd PUC / Class 12'],
+      content: {
+        aim: 'To visualise the Insertion Sort algorithm — how it builds the final sorted array one element at a time.',
+        requirements: ['Interactive sorting visualiser'],
+        theory: 'Insertion Sort works by maintaining a sorted sub-array and inserting each new element into its correct position. It is similar to sorting playing cards in your hand. Best case: O(n) when already sorted. Worst case: O(n²) for reverse sorted. It is stable and adaptive.',
+        procedure: [
+          'Generate a random array.',
+          'Observe how the algorithm picks each element and inserts it in the sorted portion.',
+          'Step through manually or use auto-play.',
+          'Count comparisons and shifts.',
+          'Compare performance with Bubble Sort.',
+        ],
+        objectives: ['Understand Insertion Sort', 'Compare with Bubble Sort', 'Identify stable sorting'],
+        observationTable: { columns: ['Input type', 'Array size', 'Comparisons', 'Shifts', 'Time complexity'], rows: 4 },
+      }
+    },
+    {
+      id: 'cs3',
+      title: 'Binary Search Visualiser',
+      description: 'Visualise the Binary Search algorithm on a sorted array with step-by-step narrowing.',
+      difficulty: 'Easy',
+      duration: '15 min',
+      category: 'Searching Algorithms',
+      boards: ['Karnataka PUC'],
+      standards: ['2nd PUC / Class 12'],
+      content: {
+        aim: 'To visualise Binary Search on a sorted array and understand its O(log n) efficiency.',
+        requirements: ['Interactive search visualiser'],
+        theory: 'Binary Search works on sorted arrays by repeatedly dividing the search interval in half. Compare the target with the middle element: if equal, found; if less, search the left half; if greater, search the right half. Time complexity: O(log₂ n). Prerequisite: array must be sorted.',
+        procedure: [
+          'Enter or generate a sorted array.',
+          'Enter a target value to search for.',
+          'Observe the algorithm narrowing the search range.',
+          'Count the number of comparisons.',
+          'Search for a value not in the array — observe the result.',
+          'Compare with Linear Search step count.',
+        ],
+        objectives: ['Understand divide-and-conquer', 'Analyse O(log n) complexity', 'Compare with linear search'],
+        observationTable: { columns: ['Array size', 'Target', 'Steps', 'Found (Yes/No)', 'Log₂(n)'], rows: 4 },
+      }
+    },
+    {
+      id: 'cs4',
+      title: 'Stack — Push, Pop, Peek',
+      description: 'Visualise stack operations (LIFO) with animated push, pop, and peek.',
+      difficulty: 'Easy',
+      duration: '15 min',
+      category: 'Data Structures',
+      boards: ['Karnataka PUC'],
+      standards: ['2nd PUC / Class 12'],
+      content: {
+        aim: 'To understand the Stack data structure (Last-In-First-Out) through animated push, pop, and peek operations.',
+        requirements: ['Interactive stack simulator'],
+        theory: 'A Stack is a linear data structure following the LIFO (Last-In, First-Out) principle. Key operations: Push (add element on top), Pop (remove top element), Peek/Top (view top element without removing), isEmpty (check if stack is empty). Applications: function call stack, undo operations, expression evaluation, bracket matching.',
+        procedure: [
+          'Start with an empty stack.',
+          'Push elements one by one and observe the stack grow.',
+          'Peek at the top element.',
+          'Pop elements and observe the LIFO order.',
+          'Try popping from an empty stack — observe underflow.',
+          'Push beyond capacity — observe overflow.',
+        ],
+        objectives: ['Understand LIFO principle', 'Perform stack operations', 'Handle overflow/underflow'],
+        observationTable: { columns: ['Operation', 'Element', 'Stack state after', 'Top element'], rows: 6 },
+      }
+    },
+    {
+      id: 'cs5',
+      title: 'Queue — Enqueue, Dequeue',
+      description: 'Visualise queue operations (FIFO) with animated enqueue and dequeue.',
+      difficulty: 'Easy',
+      duration: '15 min',
+      category: 'Data Structures',
+      boards: ['Karnataka PUC'],
+      standards: ['2nd PUC / Class 12'],
+      content: {
+        aim: 'To understand the Queue data structure (First-In-First-Out) through animated enqueue and dequeue operations.',
+        requirements: ['Interactive queue simulator'],
+        theory: 'A Queue is a linear data structure following the FIFO (First-In, First-Out) principle. Key operations: Enqueue (add to rear), Dequeue (remove from front), Front (view front element), isEmpty. Applications: print queue, BFS traversal, scheduling, buffer management.',
+        procedure: [
+          'Start with an empty queue.',
+          'Enqueue elements and observe the queue grow.',
+          'Dequeue elements and observe FIFO order.',
+          'Observe front and rear pointers.',
+          'Try dequeue from empty queue — observe underflow.',
+        ],
+        objectives: ['Understand FIFO principle', 'Perform queue operations', 'Compare with Stack'],
+        observationTable: { columns: ['Operation', 'Element', 'Queue state', 'Front', 'Rear'], rows: 6 },
+      }
+    },
+    {
+      id: 'cs6',
+      title: 'Logic Gates Simulator',
+      description: 'Build and simulate basic logic gate circuits (AND, OR, NOT, NAND, NOR, XOR).',
+      difficulty: 'Medium',
+      duration: '25 min',
+      category: 'Digital Logic',
+      boards: ['Karnataka PUC'],
+      standards: ['2nd PUC / Class 12'],
+      content: {
+        aim: 'To simulate basic logic gates and verify their truth tables, then build simple combinational circuits.',
+        requirements: ['Interactive logic gate simulator'],
+        theory: 'Logic gates are the building blocks of digital circuits. AND: output 1 only when all inputs are 1. OR: output 1 when at least one input is 1. NOT: inverts the input. NAND: NOT of AND. NOR: NOT of OR. XOR: output 1 when inputs differ. Universal gates: NAND and NOR can implement any Boolean function.',
+        procedure: [
+          'Select a gate type (AND, OR, NOT, NAND, NOR, XOR).',
+          'Toggle inputs A and B to see the output change.',
+          'Verify the truth table for each gate.',
+          'Build a half-adder circuit using XOR and AND gates.',
+          'Build a full-adder extending the half-adder.',
+        ],
+        objectives: ['Understand logic gate operations', 'Verify truth tables', 'Build combinational circuits'],
+        observationTable: { columns: ['Gate', 'A', 'B', 'Output', 'Boolean expression'], rows: 8 },
+      }
+    },
+  ]
+};
