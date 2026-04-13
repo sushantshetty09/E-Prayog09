@@ -1,67 +1,65 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { FlaskConical, AlertCircle } from 'lucide-react';
 
 const AuthCallback: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [error, setError] = useState('');
 
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        // Get the auth code/tokens from the URL - Supabase handles PKCE exchange automatically
-        const { data, error: sessionError } = await supabase.auth.getSession();
+        // PKCE flow: exchange the code from URL for a session
+        const code = searchParams.get('code');
+        
+        if (code) {
+          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          
+          if (exchangeError) {
+            console.error('Code exchange error:', exchangeError);
+            setError(exchangeError.message);
+            setTimeout(() => navigate('/login', { replace: true }), 3000);
+            return;
+          }
 
-        if (sessionError) {
-          console.error('Auth callback error:', sessionError);
-          setError(sessionError.message);
+          if (data.session) {
+            await upsertUser(data.session.user);
+            navigate('/home', { replace: true });
+            return;
+          }
+        }
+
+        // Check for error in URL params (OAuth errors)
+        const errorParam = searchParams.get('error');
+        const errorDescription = searchParams.get('error_description');
+        if (errorParam) {
+          setError(errorDescription || errorParam);
           setTimeout(() => navigate('/login', { replace: true }), 3000);
           return;
         }
 
-        if (data.session) {
-          // Successfully authenticated — upsert user record
-          const user = data.session.user;
-          try {
-            await supabase.from('users').upsert({
-              id: user.id,
-              full_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || '',
-              email: user.email || '',
-              role: 'Student',
-              created_at: new Date().toISOString(),
-            }, { onConflict: 'id' });
-          } catch {
-            // Non-critical: user record upsert failed, continue anyway
-            console.warn('User upsert failed, continuing...');
-          }
+        // Fallback: check if session was already established (implicit flow / auto-detect)
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData.session) {
+          await upsertUser(sessionData.session.user);
           navigate('/home', { replace: true });
           return;
         }
 
-        // No session yet — listen for auth state change (PKCE flow may still be processing)
+        // Last resort: wait for auth state change
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
           async (event, session) => {
             if (event === 'SIGNED_IN' && session) {
-              const user = session.user;
-              try {
-                await supabase.from('users').upsert({
-                  id: user.id,
-                  full_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || '',
-                  email: user.email || '',
-                  role: 'Student',
-                  created_at: new Date().toISOString(),
-                }, { onConflict: 'id' });
-              } catch {
-                console.warn('User upsert failed, continuing...');
-              }
+              await upsertUser(session.user);
               subscription.unsubscribe();
               navigate('/home', { replace: true });
             }
           }
         );
 
-        // Timeout fallback — if auth doesn't complete within 15s, redirect to login
+        // Timeout fallback
         const timeout = setTimeout(() => {
           subscription.unsubscribe();
           setError('Authentication timed out. Please try again.');
@@ -80,7 +78,7 @@ const AuthCallback: React.FC = () => {
     };
 
     handleAuthCallback();
-  }, [navigate]);
+  }, [navigate, searchParams]);
 
   return (
     <div className="min-h-screen flex items-center justify-center px-6 pt-20">
@@ -106,5 +104,19 @@ const AuthCallback: React.FC = () => {
     </div>
   );
 };
+
+async function upsertUser(user: any) {
+  try {
+    await supabase.from('users').upsert({
+      id: user.id,
+      full_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || '',
+      email: user.email || '',
+      role: 'Student',
+      created_at: new Date().toISOString(),
+    }, { onConflict: 'id' });
+  } catch {
+    console.warn('User upsert failed, continuing...');
+  }
+}
 
 export default AuthCallback;
