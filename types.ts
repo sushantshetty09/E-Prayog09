@@ -38,6 +38,8 @@ export interface LabContent {
   procedure: string[];
   objectives: string[];
   safety?: string[];
+  instructions?: string[];
+  result?: string;
   realWorldApplications?: string[];
   vivaQuestions?: VivaQuestion[];
   quizQuestions?: QuizQuestion[];

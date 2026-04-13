@@ -58,19 +58,17 @@ lerna-debug.log*
 *.sw?
 *.swp
 *.swo
-.DS_Store
-Thumbs.db
 
 # ===========================
 # OS Files
 # ===========================
 .DS_Store
-.DS_Store?
+Thumbs.db
+Desktop.ini
 ._*
 .Spotlight-V100
 .Trashes
 ehthumbs.db
-Desktop.ini
 
 # ===========================
 # Testing
@@ -80,21 +78,16 @@ coverage/
 
 # ===========================
 # Package Manager Lock Files
-# (keep only one — remove if you want to commit lock file)
+# (keep package-lock.json for reproducible builds)
 # ===========================
-# package-lock.json  # keep this — commit it for reproducible builds
 # yarn.lock
 # pnpm-lock.yaml
 
 # ===========================
-# Firebase
+# Deployment
 # ===========================
-.firebase/
-firebase-debug.log
-firestore-debug.log
-database-debug.log
-ui-debug.log
-.firebaserc        # contains project IDs — OK to commit if not sensitive
+.vercel/
+.netlify/
 
 # ===========================
 # Miscellaneous

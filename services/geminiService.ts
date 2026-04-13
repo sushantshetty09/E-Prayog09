@@ -1,6 +1,6 @@
 import { GoogleGenAI, Chat } from '@google/genai';
 
-const API_KEY = (typeof process !== 'undefined' && process.env?.GEMINI_API_KEY) || '';
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 
 let ai: GoogleGenAI | null = null;
 try {
@@ -54,7 +54,7 @@ export async function sendMessageToGemini(chat: Chat, message: string) {
 }
 
 export async function askTutor(question: string, labContext?: string): Promise<string> {
-  if (!ai) return 'AI Tutor is not configured. Please set the GEMINI_API_KEY environment variable.';
+  if (!ai) return 'AI Tutor is not configured. Please set the VITE_GEMINI_API_KEY environment variable.';
 
   let prompt = SYSTEM_PROMPT;
   if (labContext && labContext !== 'General') {

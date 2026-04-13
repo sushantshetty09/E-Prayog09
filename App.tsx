@@ -8,6 +8,7 @@ import AIFloatingTutor from './components/AIFloatingTutor';
 // Lazy-loaded pages
 const Home = React.lazy(() => import('./pages/Home'));
 const Login = React.lazy(() => import('./pages/Login'));
+const AuthCallback = React.lazy(() => import('./pages/AuthCallback'));
 const Subjects = React.lazy(() => import('./pages/Subjects'));
 const SubjectView = React.lazy(() => import('./pages/SubjectView'));
 const LabView = React.lazy(() => import('./pages/LabView'));
@@ -34,6 +35,7 @@ const App: React.FC = () => {
                 <Route path="/" element={<Navigate to="/home" replace />} />
                 <Route path="/home" element={<Home />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/auth/callback" element={<AuthCallback />} />
                 <Route path="/subjects" element={<Subjects />} />
                 <Route path="/subjects/:subjectId" element={<SubjectView />} />
                 <Route path="/subjects/:subjectId/:labId" element={<LabView />} />

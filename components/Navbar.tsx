@@ -3,8 +3,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, FlaskConical, LogIn, LogOut, User } from 'lucide-react';
 import { NAV_ITEMS } from '../constants';
 import { AnimatePresence, motion } from 'framer-motion';
-import { signOut } from 'firebase/auth';
-import { auth } from '../services/firebase';
 import { useAuth } from '../services/AuthContext';
 
 const MotionSpan = motion.span as any;
@@ -19,7 +17,7 @@ const Navbar: React.FC = () => {
   const [titleIndex, setTitleIndex] = useState(0);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, role } = useAuth();
+  const { user, role, signOut } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -32,12 +30,16 @@ const Navbar: React.FC = () => {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      await signOut();
       navigate('/login');
     } catch (error) {
       console.error("Logout Error:", error);
     }
   };
+
+  // Get user display info from Supabase user metadata
+  const displayName = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split('@')[0] || '';
+  const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || '';
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-40 glass-nav h-20 px-6 md:px-12 flex items-center justify-between transition-colors duration-300">
@@ -102,15 +104,15 @@ const Navbar: React.FC = () => {
         {user ? (
           <div className="flex items-center gap-3">
             <Link to="/profile" aria-label="View Profile" className="group flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5 transition-all">
-              {user.photoURL ? (
-                <img src={user.photoURL} alt="Profile" className="w-8 h-8 rounded-full object-cover" />
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Profile" className="w-8 h-8 rounded-full object-cover" />
               ) : (
                 <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold">
-                  {user.displayName?.charAt(0) || <User size={14} />}
+                  {displayName?.charAt(0)?.toUpperCase() || <User size={14} />}
                 </div>
               )}
               <span className="text-sm text-slate-600 dark:text-gray-400 hidden lg:inline">
-                {user.displayName?.split(' ')[0] || 'Profile'}
+                {displayName?.split(' ')[0] || 'Profile'}
               </span>
             </Link>
             <button onClick={handleLogout} aria-label="Logout" className="px-4 py-2 rounded-full bg-black/5 dark:bg-white/5 hover:bg-red-500/10 text-sm font-bold transition-all flex items-center gap-2">
