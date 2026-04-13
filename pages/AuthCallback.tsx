@@ -26,7 +26,7 @@ const AuthCallback: React.FC = () => {
 
           if (data.session) {
             await upsertUser(data.session.user);
-            navigate('/home', { replace: true });
+            await redirectBasedOnRole(data.session.user.id, navigate);
             return;
           }
         }
@@ -44,17 +44,17 @@ const AuthCallback: React.FC = () => {
         const { data: sessionData } = await supabase.auth.getSession();
         if (sessionData.session) {
           await upsertUser(sessionData.session.user);
-          navigate('/home', { replace: true });
+          await redirectBasedOnRole(sessionData.session.user.id, navigate);
           return;
         }
 
         // Last resort: wait for auth state change
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
           async (event, session) => {
-            if (event === 'SIGNED_IN' && session) {
+            if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
               await upsertUser(session.user);
               subscription.unsubscribe();
-              navigate('/home', { replace: true });
+              await redirectBasedOnRole(session.user.id, navigate);
             }
           }
         );
@@ -104,6 +104,25 @@ const AuthCallback: React.FC = () => {
     </div>
   );
 };
+
+async function redirectBasedOnRole(userId: string, navigate: any) {
+  try {
+    const roleQuery = supabase.from('users').select('role').eq('id', userId).single();
+    const timeout = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('Role lookup timeout')), 6000);
+    });
+    const { data: userData } = await Promise.race([roleQuery, timeout]) as any;
+    const role = userData?.role || 'Student';
+    const routes: Record<string, string> = {
+      'Admin': '/dashboard',
+      'Teacher': '/dashboard',
+      'Student': '/home',
+    };
+    navigate(routes[role] || '/home', { replace: true });
+  } catch (e) {
+    navigate('/home', { replace: true });
+  }
+}
 
 async function upsertUser(user: any) {
   try {

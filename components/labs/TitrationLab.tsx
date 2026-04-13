@@ -29,8 +29,15 @@ const TitrationLab: React.FC = () => {
     ctx.fillStyle = '#475569'; ctx.fillRect(bx - 3, by + bh, 6, 15);
     // Drop
     if (buretteVol > 0 && buretteVol < 50) {
-      const dropY = by + bh + 20 + (Math.sin(Date.now() / 200) + 1) * 10;
-      ctx.beginPath(); ctx.arc(bx, dropY, 3, 0, Math.PI * 2); ctx.fillStyle = '#a78bfa'; ctx.fill();
+      // Simulate falling drops
+      const dropCycle = (Date.now() % 500) / 500; // 0 to 1 every 500ms
+      const dropY = by + bh + (dropCycle * 180); // Falls down towards flask 80px
+      if (dropY < fy) { // Only draw if above flask
+        ctx.beginPath(); 
+        ctx.arc(bx + (Math.random() - 0.5)*2, dropY, 2, 0, Math.PI * 2); 
+        ctx.fillStyle = '#a78bfa'; 
+        ctx.fill();
+      }
     }
     // Conical flask
     const fx = W / 2, fy = H - 40;

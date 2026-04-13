@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Zap, FlaskConical, Dna, Calculator, Monitor, Bot, Microscope, GraduationCap, Sparkles, ArrowRight, BarChart3, Users, BookOpen } from 'lucide-react';
+import { Zap, FlaskConical, Dna, Calculator, Monitor, Bot, Microscope, GraduationCap, Sparkles, ArrowRight, BarChart3, Users, BookOpen, Shield } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
 import { SUBJECTS } from '../constants';
+import { useAuth } from '../services/AuthContext';
 
 const MotionDiv = motion.div as any;
 const MotionH1 = motion.h1 as any;
@@ -44,6 +45,8 @@ function AnimatedCounter({ target }: { target: number }) {
 }
 
 const Home: React.FC = () => {
+  const { user, role } = useAuth();
+  
   return (
     <div className="min-h-screen pt-20">
       {/* Hero */}
@@ -75,6 +78,8 @@ const Home: React.FC = () => {
           </MotionDiv>
         </div>
       </section>
+
+
 
       {/* Stats */}
       <section className="px-6 md:px-12 lg:px-20 py-16">

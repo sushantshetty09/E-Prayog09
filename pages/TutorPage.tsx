@@ -12,9 +12,13 @@ const TutorPage: React.FC = () => {
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const endRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+  useEffect(() => { 
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [messages, loading]);
 
   const handleSend = async () => {
     if (!input.trim() || loading) return;
@@ -55,7 +59,7 @@ const TutorPage: React.FC = () => {
         </div>
 
         {/* Chat area */}
-        <div className="flex-1 glass-panel rounded-2xl p-4 mb-4 overflow-y-auto max-h-[60vh] space-y-4">
+        <div ref={chatContainerRef} className="flex-1 glass-panel rounded-2xl p-4 mb-4 overflow-y-auto max-h-[60vh] space-y-4">
           <AnimatePresence>
             {messages.map(msg => (
               <MotionDiv key={msg.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
@@ -79,7 +83,6 @@ const TutorPage: React.FC = () => {
               </div>
             </div>
           )}
-          <div ref={endRef} />
         </div>
 
         {/* Quick questions */}

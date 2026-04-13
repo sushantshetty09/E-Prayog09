@@ -64,14 +64,38 @@ const Login: React.FC = () => {
           setSuccess('Account created! Please check your email to confirm your account.');
           return;
         }
-        navigate('/home');
+        // Fetch role to redirect to correct dashboard
+        if (data.user) {
+          const { data: userData } = await supabase.from('users').select('role').eq('id', data.user.id).single();
+          const userRole = userData?.role || 'Student';
+          const roleRoutes: Record<string, string> = {
+            'Admin': '/dashboard',
+            'Teacher': '/dashboard',
+            'Student': '/home',
+          };
+          navigate(roleRoutes[userRole] || '/home');
+        } else {
+          navigate('/home');
+        }
       } else {
-        const { error: signInErr } = await supabase.auth.signInWithPassword({
+        const { data, error: signInErr } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
         if (signInErr) throw signInErr;
-        navigate('/home');
+        
+        if (data.user) {
+          const { data: userData } = await supabase.from('users').select('role').eq('id', data.user.id).single();
+          const userRole = userData?.role || 'Student';
+          const roleRoutes: Record<string, string> = {
+            'Admin': '/dashboard',
+            'Teacher': '/dashboard',
+            'Student': '/home',
+          };
+          navigate(roleRoutes[userRole] || '/home');
+        } else {
+           navigate('/home');
+        }
       }
     } catch (err: any) {
       setError(friendlyError(err));
@@ -90,6 +114,9 @@ const Login: React.FC = () => {
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            prompt: 'select_account',
+          },
         },
       });
       if (oauthErr) {
@@ -203,6 +230,18 @@ const Login: React.FC = () => {
             {isRegister ? 'Log In' : 'Sign Up'}
           </button>
         </p>
+
+        <div className="mt-8 pt-6 border-t border-white/5 text-center">
+          <p className="text-xs text-slate-500 mb-3">Staff access to the platform</p>
+          <div className="flex items-center justify-center gap-4">
+            <button onClick={() => navigate('/staff-login?type=teacher')} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 text-xs font-bold transition-colors border border-purple-500/20">
+              Teacher Login
+            </button>
+            <button onClick={() => navigate('/staff-login?type=admin')} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 text-xs font-bold transition-colors border border-red-500/20">
+              Admin Login
+            </button>
+          </div>
+        </div>
 
         {/* Google OAuth Setup Help Modal */}
         {showGoogleHelp && (

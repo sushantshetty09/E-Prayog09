@@ -20,11 +20,10 @@ const PendulumLab: React.FC = () => {
     ctx.clearRect(0, 0, W, H);
 
     // Background
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(0, 0, W, H);
+    // Skipping background fill to intentionally leave it transparent/styled by CSS
 
-    // Support bar
-    ctx.fillStyle = '#475569';
+    // Support bar (ceiling)
+    ctx.fillStyle = '#cbd5e1';
     ctx.fillRect(W * 0.3, 20, W * 0.4, 8);
 
     // Pivot point
@@ -37,40 +36,34 @@ const PendulumLab: React.FC = () => {
     const by = py + ropeLen * Math.cos(angle);
 
     // Rope
-    ctx.strokeStyle = '#94a3b8';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(px, py);
     ctx.lineTo(bx, by);
     ctx.stroke();
 
-    // Pivot
-    ctx.fillStyle = '#64748b';
+    // Bob (Shadow projection)
+    ctx.fillStyle = 'rgba(0,0,0,0.1)';
     ctx.beginPath();
-    ctx.arc(px, py, 5, 0, Math.PI * 2);
+    ctx.ellipse(bx, H - 10, 15, 4, 0, 0, Math.PI * 2);
     ctx.fill();
 
     // Bob
     const bobR = 16;
     const grad = ctx.createRadialGradient(bx - 4, by - 4, 0, bx, by, bobR);
-    grad.addColorStop(0, '#fbbf24');
-    grad.addColorStop(1, '#d97706');
+    grad.addColorStop(0, '#60a5fa');
+    grad.addColorStop(1, '#2563eb');
     ctx.beginPath();
     ctx.arc(bx, by, bobR, 0, Math.PI * 2);
     ctx.fillStyle = grad;
     ctx.fill();
-    ctx.strokeStyle = '#92400e';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
 
-    // Trail arc (dashed)
-    ctx.setLineDash([4, 4]);
-    ctx.strokeStyle = 'rgba(251,191,36,0.15)';
-    ctx.lineWidth = 1;
+    // Pivot
+    ctx.fillStyle = '#64748b';
     ctx.beginPath();
-    ctx.arc(px, py, ropeLen, Math.PI / 2 - Math.PI / 6, Math.PI / 2 + Math.PI / 6);
-    ctx.stroke();
-    ctx.setLineDash([]);
+    ctx.arc(px, py, 4, 0, Math.PI * 2);
+    ctx.fill();
 
     // Angle indicator
     if (Math.abs(angle) > 0.01) {
@@ -93,15 +86,17 @@ const PendulumLab: React.FC = () => {
     ctx.fillStyle = '#10b981';
     ctx.font = 'bold 14px Inter';
     ctx.textAlign = 'center';
-    ctx.fillText(`T = ${T.toFixed(3)} s   |   L = ${length} cm   |   g = ${g} m/s²`, W / 2, H - 15);
+    ctx.fillText(`Period T = ${T.toFixed(3)} s`, W / 2, H - 20);
 
     // Physics simulation step
     if (isSwinging) {
-      const dt = 0.016;
-      const acc = -(g / (L_m)) * Math.sin(angleRef.current);
-      velRef.current += acc * dt;
-      velRef.current *= 0.999; // slight damping
-      angleRef.current += velRef.current * dt;
+      // Analytical approach
+      velRef.current += 1; // Used as 'time elapsed in frames'
+      const w = Math.sqrt(g / (L_m));
+      const t = velRef.current * 0.016; 
+      const damping = 0.998;
+      angleRef.current = (Math.PI / 6) * Math.cos(w * t) * Math.pow(damping, t * 2);
+      
       animRef.current = requestAnimationFrame(draw);
     }
   }, [length, isSwinging, T, g, L_m]);

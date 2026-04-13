@@ -45,7 +45,7 @@ const AIFloatingTutor: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const chatSessionRef = useRef<Chat | null>(null);
   const activeContextRef = useRef<string | null>('__UNINITIALIZED__');
@@ -70,7 +70,11 @@ const AIFloatingTutor: React.FC = () => {
     setMessages([{ id: 'welcome', role: 'model', text: welcomeText, timestamp: Date.now() }]);
   }, [labContext]);
 
-  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [messages]);
   useEffect(() => { if (isOpen) setTimeout(() => inputRef.current?.focus(), 300); }, [isOpen]);
 
   const handleSend = useCallback(async () => {
@@ -160,7 +164,7 @@ const AIFloatingTutor: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 bg-black/20">
+            <div ref={chatContainerRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4 bg-black/20">
               {messages.map(msg => (
                 <div key={msg.id} className={`flex items-start gap-2.5 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
                   <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-white ${msg.role === 'model' ? 'bg-gradient-to-br from-purple-600 to-blue-600' : 'bg-blue-600'}`}>
@@ -179,7 +183,6 @@ const AIFloatingTutor: React.FC = () => {
                   </div>
                 </div>
               ))}
-              <div ref={messagesEndRef} />
             </div>
 
             <div className="px-3 py-3 bg-black/30 border-t border-white/10">

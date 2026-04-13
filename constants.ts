@@ -8,10 +8,10 @@ import { csData } from './data/cs_data';
 
 export const NAV_ITEMS: NavItem[] = [
   { label: 'Home', path: '/home' },
-  { label: 'Subjects', path: '/subjects' },
+  { label: 'Experiments', path: '/subjects' },
+  { label: 'Tools', path: '/tools' },
   { label: 'AI Tutor', path: '/tutor' },
   { label: 'About', path: '/about' },
-  { label: 'Contact', path: '/contact' },
 ];
 
 export const SUBJECTS: SubjectData[] = [

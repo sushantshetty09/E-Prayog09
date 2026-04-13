@@ -28,8 +28,8 @@ const PHLabSimulation: React.FC = () => {
         </div>
         {/* Test tube */}
         <svg viewBox="0 0 120 200" className="h-40">
-          <rect x="35" y="20" width="50" height="140" rx="20" fill={sol.color+'30'} stroke="#94a3b8" strokeWidth="2" />
-          <rect x="37" y={160 - 100} width="46" height="100" rx="18" fill={sol.color+'60'} />
+          <rect x="35" y="20" width="50" height="140" rx="20" fill={sol.color+'30'} stroke="#94a3b8" strokeWidth="2" style={{ transition: 'fill 0.8s ease' }} />
+          <rect x="37" y={160 - 100} width="46" height="100" rx="18" fill={sol.color+'60'} style={{ transition: 'fill 0.8s ease' }} />
           <text x="60" y="180" textAnchor="middle" fill="#94a3b8" fontSize="10">{sol.name}</text>
         </svg>
         <div className="text-center">

@@ -69,8 +69,23 @@ const OhmsLawLab: React.FC = () => {
     ctx.fillText(`${resistance}Ω`, cx + 160, ry + 32);
 
     // Bottom wire
-    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2;
+    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.moveTo(cx + 140, ry + 65); ctx.lineTo(cx - 120, ry + 65); ctx.lineTo(cx - 120, cy - 60); ctx.stroke();
+
+    // Electrons & Current Arrows
+    const time = Date.now() / 1000;
+    const offset = (time * current * 20) % 50;
+    ctx.fillStyle = '#3b82f6';
+    for (let i = 0; i < 5; i++) {
+        // Top wire electrons (moving left to right)
+        ctx.beginPath(); ctx.arc(cx - 30 + i * 40 + offset, cy - 60, 4, 0, Math.PI * 2); ctx.fill();
+        // Bottom wire electrons (moving right to left)
+        ctx.beginPath(); ctx.arc(cx + 140 - (i * 40 + offset), ry + 65, 4, 0, Math.PI * 2); ctx.fill();
+    }
+    // Current arrows
+    ctx.fillStyle = '#ef4444'; ctx.font = '12px Inter';
+    ctx.fillText('I →', cx + 20, cy - 65);
+    ctx.fillText('← I', cx + 20, ry + 55);
 
     // Voltmeter (parallel to resistor)
     ctx.beginPath(); ctx.arc(cx + 60, ry + 32, 18, 0, Math.PI * 2);

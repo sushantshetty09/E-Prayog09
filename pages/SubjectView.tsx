@@ -45,13 +45,13 @@ const SubjectView: React.FC = () => {
             <Filter size={14} className="text-slate-500" />
             <span className="text-xs text-slate-500 uppercase font-bold">Difficulty:</span>
             {['All', 'Easy', 'Medium', 'Hard'].map(d => (
-              <button key={d} onClick={() => setDifficulty(d)} className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${difficulty === d ? 'bg-white/10 text-white border-white/20' : 'text-slate-500 border-white/5 hover:text-white'}`}>{d}</button>
+              <button key={d} type="button" onClick={() => setDifficulty(d)} className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${difficulty === d ? 'bg-white/10 text-white border-white/20' : 'text-slate-500 border-white/5 hover:text-white'}`}>{d}</button>
             ))}
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs text-slate-500 uppercase font-bold">Standard:</span>
             {['All', '1st PUC / Class 11', '2nd PUC / Class 12'].map(s => (
-              <button key={s} onClick={() => setStandard(s)} className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${standard === s ? 'bg-white/10 text-white border-white/20' : 'text-slate-500 border-white/5 hover:text-white'}`}>{s === 'All' ? s : s.split(' / ')[0]}</button>
+              <button key={s} type="button" onClick={() => setStandard(s)} className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${standard === s ? 'bg-white/10 text-white border-white/20' : 'text-slate-500 border-white/5 hover:text-white'}`}>{s === 'All' ? s : s.split(' / ')[0]}</button>
             ))}
           </div>
         </div>

@@ -17,8 +17,8 @@ const BenedictsTestLab: React.FC = () => {
       <h3 className="text-lg font-bold text-white">Benedict's Test for Reducing Sugars</h3>
       <div className="flex-1 flex items-center justify-center gap-8">
         <svg viewBox="0 0 120 220" className="w-28">
-          <rect x="35" y="30" width="50" height="140" rx="20" fill={tubeColor + '30'} stroke="#94a3b8" strokeWidth="2" />
-          <rect x="37" y={heated ? 70 : 100} width="46" height={heated ? 98 : 68} rx="18" fill={tubeColor + '70'} />
+          <rect x="35" y="30" width="50" height="140" rx="20" fill={tubeColor + '30'} stroke="#94a3b8" strokeWidth="2" style={{ transition: 'fill 0.8s ease' }} />
+          <rect x="37" y={heated ? 70 : 100} width="46" height={heated ? 98 : 68} rx="18" fill={tubeColor + '70'} style={{ transition: 'all 0.8s ease' }} />
           {heated && s.reducing && <text x="60" y="60" textAnchor="middle" fill="#ef4444" fontSize="8" fontWeight="bold">Precipitate ↓</text>}
           <text x="60" y="195" textAnchor="middle" fill="#94a3b8" fontSize="9">{s.name}</text>
         </svg>

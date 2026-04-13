@@ -13,7 +13,7 @@ const KMnO4TitrationLab: React.FC = () => {
           <rect x="125" y="20" width="50" height="140" rx="5" fill="none" stroke="#94a3b8" strokeWidth="2" />
           <rect x="127" y={22 + (vol / 40) * 136} width="46" height={138 - (vol / 40) * 136} rx="3" fill="#c026d380" />
           <text x="150" y="15" textAnchor="middle" fill="#94a3b8" fontSize="10">Burette (KMnO₄)</text>
-          <path d="M 100 320 L 130 240 L 170 240 L 200 320 Z" fill={color} stroke="#94a3b8" strokeWidth="2" />
+          <path d="M 100 320 L 130 240 L 170 240 L 200 320 Z" fill={color} stroke="#94a3b8" strokeWidth="2" style={{ transition: 'fill 0.8s ease' }} />
           <rect x="128" y="225" width="44" height="15" fill="none" stroke="#94a3b8" strokeWidth="1.5" />
           <line x1="150" y1="160" x2="150" y2="225" stroke="#94a3b8" strokeWidth="1" strokeDasharray="3" />
           <text x="150" y="340" textAnchor="middle" fill={atEnd ? '#10b981' : past ? '#ef4444' : '#94a3b8'} fontSize="12" fontWeight="bold">

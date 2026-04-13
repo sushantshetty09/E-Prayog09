@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './services/AuthContext';
 import Navbar from './components/Navbar';
@@ -14,6 +14,27 @@ const SubjectView = React.lazy(() => import('./pages/SubjectView'));
 const LabView = React.lazy(() => import('./pages/LabView'));
 const TutorPage = React.lazy(() => import('./pages/TutorPage'));
 
+// Phase 2 Pages
+const Profile = React.lazy(() => import('./pages/Profile'));
+const About = React.lazy(() => import('./pages/About'));
+const StudentDashboard = React.lazy(() => import('./pages/StudentDashboard'));
+const TeacherDashboard = React.lazy(() => import('./pages/TeacherDashboard'));
+const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
+const StaffLogin = React.lazy(() => import('./pages/StaffLogin'));
+
+// Tools
+const Tools = lazy(() => import('./pages/Tools'));
+const FormulaSheet = lazy(() => import('./pages/tools/FormulaSheet'));
+const LogicGates = lazy(() => import('./pages/tools/LogicGates'));
+const PeriodicTableTool = lazy(() => import('./pages/tools/PeriodicTableTool'));
+const Constants = lazy(() => import('./pages/tools/Constants'));
+const CalculatorTool = lazy(() => import('./pages/tools/CalculatorTool'));
+const SafetyGuide = lazy(() => import('./pages/tools/SafetyGuide'));
+const BioDiagrams = lazy(() => import('./pages/tools/BioDiagrams'));
+
+import ProtectedRoute from './components/ProtectedRoute';
+import { useAuth } from './services/AuthContext';
+
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center">
     <div className="flex flex-col items-center gap-4">
@@ -22,6 +43,14 @@ const PageLoader = () => (
     </div>
   </div>
 );
+
+const RoleLanding: React.FC = () => {
+  const { role, loading } = useAuth();
+  if (loading) return <PageLoader />;
+  if (role === 'Admin') return <AdminDashboard />;
+  if (role === 'Teacher') return <TeacherDashboard />;
+  return <StudentDashboard />;
+};
 
 const App: React.FC = () => {
   return (
@@ -35,11 +64,55 @@ const App: React.FC = () => {
                 <Route path="/" element={<Navigate to="/home" replace />} />
                 <Route path="/home" element={<Home />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/staff-login" element={<StaffLogin />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
+                <Route path="/about" element={<About />} />
+                
                 <Route path="/subjects" element={<Subjects />} />
                 <Route path="/subjects/:subjectId" element={<SubjectView />} />
                 <Route path="/subjects/:subjectId/:labId" element={<LabView />} />
                 <Route path="/tutor" element={<TutorPage />} />
+                
+                {/* Protected Dashboards & Profile */}
+                <Route path="/profile" element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                } />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <RoleLanding />
+                    </ProtectedRoute>
+                  }
+                />
+                
+                <Route path="/tools" element={<ProtectedRoute><Tools /></ProtectedRoute>} />
+                <Route path="/tools/formula-sheet" element={<ProtectedRoute><FormulaSheet /></ProtectedRoute>} />
+                <Route path="/tools/logic-gates" element={<ProtectedRoute><LogicGates /></ProtectedRoute>} />
+                <Route path="/tools/periodic-table" element={<ProtectedRoute><PeriodicTableTool /></ProtectedRoute>} />
+                <Route path="/tools/constants" element={<ProtectedRoute><Constants /></ProtectedRoute>} />
+                <Route path="/tools/calculator" element={<ProtectedRoute><CalculatorTool /></ProtectedRoute>} />
+                <Route path="/tools/safety-guide" element={<ProtectedRoute><SafetyGuide /></ProtectedRoute>} />
+                <Route path="/tools/bio-diagrams" element={<ProtectedRoute><BioDiagrams /></ProtectedRoute>} />
+
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <RoleLanding />
+                    </ProtectedRoute>
+                  }
+                />
+                
+                <Route path="/student-dashboard" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/teacher-dashboard" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/admin-dashboard" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/teacher" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/admin" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/student" element={<Navigate to="/dashboard" replace />} />
+
                 <Route path="*" element={
                   <div className="min-h-screen flex items-center justify-center">
                     <div className="text-center">

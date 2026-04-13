@@ -2,6 +2,8 @@ import React, { useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { SUBJECTS } from '../constants';
 import SimulationStage from '../components/SimulationStage';
+import { useAuth } from '../services/AuthContext';
+import { supabase } from '../services/supabase';
 import {
   ArrowLeft, ArrowRight, Target, BookOpen, ListChecks, Info, Youtube,
   FlaskConical, ClipboardList, CheckCircle2, Globe, HelpCircle, Brain,
@@ -28,9 +30,21 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode; shortLabel: string 
 const LabView: React.FC = () => {
   const { subjectId, labId } = useParams<{ subjectId: string; labId: string }>();
   const [tabIdx, setTabIdx] = useState(0);
-  const [quizAnswers, setQuizAnswers] = useState<Record<number, number>>({});
+  const [quizAnswers, setQuizAnswers] = useState<Record<string, number>>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
+  const [quizScore, setQuizScore] = useState(0);
+
+  // Scroll to top when tab changes to prevent layout shift jumping to the bottom
+  React.useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [tabIdx]);
+  
+  const [vivaRevealed, setVivaRevealed] = useState<Set<number>>(new Set());
+  const [vivaRating, setVivaRating] = useState<Record<number, 'knew' | 'unsure' | 'missed'>>({});
+  const [shuffledViva, setShuffledViva] = useState<any[]>([]);
+
   const printRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
 
   const subject = SUBJECTS.find(s => s.id === subjectId);
   const lab = subject?.labs.find(l => l.id === labId);
@@ -86,9 +100,44 @@ const LabView: React.FC = () => {
     printWindow.print();
   };
 
-  // Generate default quiz if none exists
+  // Setup Quiz and Viva
   const quizQuestions = content?.quizQuestions || [];
-  const quizScore = quizSubmitted ? quizQuestions.filter(q => quizAnswers[q.id] === q.correctIndex).length : 0;
+  
+  // Use effect to initialize shuffled viva
+  React.useEffect(() => {
+    if (content?.vivaQuestions) {
+      setShuffledViva([...content.vivaQuestions]);
+    }
+  }, [content]);
+
+  const handleQuizSubmit = async () => {
+    let score = 0;
+    quizQuestions.forEach(q => {
+      if (quizAnswers[q.id] === q.correctIndex) score++;
+    });
+    setQuizScore(score);
+    setQuizSubmitted(true);
+    
+    if (user) {
+      try {
+        await supabase.from('quiz_scores').upsert({
+          user_id: user.id,
+          lab_id: lab.id,
+          score,
+          total: quizQuestions.length,
+          completed_at: new Date().toISOString()
+        });
+      } catch (e) {
+         console.warn('Supabase save error:', e);
+      }
+    }
+  };
+
+  const handleShuffleViva = () => {
+    setShuffledViva([...shuffledViva].sort(() => Math.random() - 0.5));
+    setVivaRevealed(new Set());
+    setVivaRating({});
+  };
 
   return (
     <div className="min-h-screen pt-24 pb-20 px-4 md:px-8 lg:px-16">
@@ -114,6 +163,7 @@ const LabView: React.FC = () => {
           {TABS.map((tab, idx) => (
             <button
               key={tab.id}
+              type="button"
               onClick={() => setTabIdx(idx)}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border
                 ${tabIdx === idx
@@ -388,23 +438,87 @@ const LabView: React.FC = () => {
           )}
 
           {/* 8. VIVA */}
-          {activeTab.id === 'viva' && content?.vivaQuestions && (
-            <div className="glass-panel rounded-2xl p-8 max-w-4xl space-y-4">
-              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                <HelpCircle size={18} style={{ color: subject.hex }} /> Viva Questions
-              </h3>
-              {content.vivaQuestions.map((vq, i) => (
-                <details key={i} className="bg-white/5 rounded-xl p-4 group">
-                  <summary className="cursor-pointer text-white font-medium flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full text-xs font-bold flex items-center justify-center"
-                      style={{ background: `${subject.hex}20`, color: subject.hex }}>
-                      Q{i + 1}
-                    </span>
-                    {vq.question}
-                  </summary>
-                  <p className="text-slate-400 mt-3 ml-8 text-sm leading-relaxed">{vq.answer}</p>
-                </details>
-              ))}
+          {activeTab.id === 'viva' && content?.vivaQuestions && shuffledViva.length > 0 && (
+            <div className="max-w-4xl space-y-6">
+              <div className="glass-panel p-6 rounded-2xl flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-bold text-white flex items-center gap-2 mb-1">
+                    <HelpCircle size={18} style={{ color: subject.hex }} /> Interactive Viva Voce
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <div className="w-48 h-1.5 bg-black/30 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all" style={{ width: `${(vivaRevealed.size / shuffledViva.length) * 100}%`, background: subject.hex }} />
+                    </div>
+                    <span className="text-xs text-slate-400 font-bold">{vivaRevealed.size} / {shuffledViva.length} revealed</span>
+                  </div>
+                </div>
+                <button 
+                  onClick={handleShuffleViva}
+                  className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white font-bold text-sm hover:bg-white/10 transition-colors"
+                >
+                  Shuffle Questions
+                </button>
+              </div>
+
+              {shuffledViva.map((vq, i) => {
+                const isRevealed = vivaRevealed.has(i);
+                const rating = vivaRating[i];
+                const borderColor = rating === 'knew' ? 'border-green-500/50' : rating === 'unsure' ? 'border-amber-500/50' : rating === 'missed' ? 'border-red-500/50' : 'border-white/10';
+                
+                return (
+                  <div key={i} className={`glass-panel rounded-2xl p-6 transition-all border ${borderColor}`}>
+                    <div className="flex items-start gap-4 mb-4">
+                      <span className="w-8 h-8 rounded-full text-sm font-bold flex items-center justify-center shrink-0" style={{ background: `${subject.hex}20`, color: subject.hex }}>
+                        Q{i + 1}
+                      </span>
+                      <h4 className="text-white font-medium text-lg leading-snug pt-1">{vq.question}</h4>
+                    </div>
+                    
+                    {!isRevealed ? (
+                      <div className="ml-12 mt-4">
+                        <button 
+                          onClick={() => setVivaRevealed(new Set(vivaRevealed).add(i))}
+                          className="px-6 py-2 rounded-xl border border-blue-500/50 text-blue-400 font-bold text-sm hover:bg-blue-500/10 transition-colors"
+                        >
+                          Reveal Answer
+                        </button>
+                      </div>
+                    ) : (
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="ml-12">
+                        <div className="p-4 rounded-xl bg-black/20 text-slate-300 leading-relaxed mb-4 border border-white/5">
+                          {vq.answer}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <span className="text-xs text-slate-500 font-bold uppercase mr-2">How did you do?</span>
+                          <button onClick={() => setVivaRating({...vivaRating, [i]: 'knew'})} className={`px-4 py-2 rounded-xl text-sm font-bold border transition-colors ${rating === 'knew' ? 'bg-green-500/20 text-green-400 border-green-500/50' : 'border-white/10 text-slate-400 hover:bg-white/5 hover:text-white'}`}>✅ I knew this</button>
+                          <button onClick={() => setVivaRating({...vivaRating, [i]: 'unsure'})} className={`px-4 py-2 rounded-xl text-sm font-bold border transition-colors ${rating === 'unsure' ? 'bg-amber-500/20 text-amber-400 border-amber-500/50' : 'border-white/10 text-slate-400 hover:bg-white/5 hover:text-white'}`}>🤔 Unsure</button>
+                          <button onClick={() => setVivaRating({...vivaRating, [i]: 'missed'})} className={`px-4 py-2 rounded-xl text-sm font-bold border transition-colors ${rating === 'missed' ? 'bg-red-500/20 text-red-400 border-red-500/50' : 'border-white/10 text-slate-400 hover:bg-white/5 hover:text-white'}`}>❌ Missed it</button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </div>
+                );
+              })}
+
+              {vivaRevealed.size === shuffledViva.length && shuffledViva.length > 0 && (
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass-panel p-6 rounded-2xl border border-white/10 mt-8 flex flex-col items-center">
+                  <h3 className="text-white font-bold text-lg mb-4">Practice Summary</h3>
+                  <div className="flex gap-4">
+                    <div className="flex flex-col items-center bg-green-500/10 p-4 rounded-xl border border-green-500/20 min-w-[100px]">
+                      <span className="text-2xl font-bold text-green-400">{Object.values(vivaRating).filter(r => r === 'knew').length}</span>
+                      <span className="text-xs text-green-300/70 font-bold uppercase mt-1">Knew</span>
+                    </div>
+                    <div className="flex flex-col items-center bg-amber-500/10 p-4 rounded-xl border border-amber-500/20 min-w-[100px]">
+                      <span className="text-2xl font-bold text-amber-400">{Object.values(vivaRating).filter(r => r === 'unsure').length}</span>
+                      <span className="text-xs text-amber-300/70 font-bold uppercase mt-1">Unsure</span>
+                    </div>
+                    <div className="flex flex-col items-center bg-red-500/10 p-4 rounded-xl border border-red-500/20 min-w-[100px]">
+                      <span className="text-2xl font-bold text-red-400">{Object.values(vivaRating).filter(r => r === 'missed').length}</span>
+                      <span className="text-xs text-red-300/70 font-bold uppercase mt-1">Missed</span>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
             </div>
           )}
           {activeTab.id === 'viva' && (!content?.vivaQuestions || content.vivaQuestions.length === 0) && (
@@ -417,70 +531,119 @@ const LabView: React.FC = () => {
           {/* 9. QUIZ */}
           {activeTab.id === 'quiz' && (
             <div className="glass-panel rounded-2xl p-8 max-w-4xl space-y-6">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Brain size={18} style={{ color: subject.hex }} /> Self-Assessment Quiz
-              </h3>
+              
+              {quizSubmitted && quizQuestions.length > 0 && (
+                <div className={`p-6 rounded-2xl border mb-8 text-center flex flex-col items-center gap-2 ${
+                  quizScore >= quizQuestions.length * 0.7 ? 'bg-green-500/10 border-green-500/30' :
+                  quizScore >= quizQuestions.length * 0.4 ? 'bg-amber-500/10 border-amber-500/30' :
+                  'bg-red-500/10 border-red-500/30'
+                }`}>
+                  <h2 className="text-lg font-bold text-white mb-2">Quiz Completed!</h2>
+                  <div className={`text-5xl font-black ${
+                    quizScore >= quizQuestions.length * 0.7 ? 'text-green-400' :
+                    quizScore >= quizQuestions.length * 0.4 ? 'text-amber-400' :
+                    'text-red-400'
+                  }`}>
+                    {quizScore} / {quizQuestions.length}
+                  </div>
+                  <p className="text-slate-400 font-medium">({Math.round((quizScore / quizQuestions.length) * 100)}%)</p>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <Brain size={18} style={{ color: subject.hex }} /> Self-Assessment Quiz
+                </h3>
+                {!quizSubmitted && quizQuestions.length > 0 && (
+                  <div className="flex items-center gap-3">
+                    <div className="text-xs text-slate-400 font-bold">{Object.keys(quizAnswers).length} / {quizQuestions.length} answered</div>
+                    <div className="w-24 h-1.5 bg-black/30 rounded-full overflow-hidden">
+                      <div className="h-full bg-blue-500 transition-all" style={{ width: `${(Object.keys(quizAnswers).length / quizQuestions.length) * 100}%` }} />
+                    </div>
+                  </div>
+                )}
+              </div>
+
               {quizQuestions.length > 0 ? (
                 <>
                   {quizQuestions.map((q, idx) => (
-                    <div key={q.id} className="bg-white/5 rounded-xl p-4">
-                      <p className="text-white font-medium mb-3 text-sm">
-                        <span className="font-bold" style={{ color: subject.hex }}>Q{idx + 1}.</span> {q.question}
-                      </p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div key={q.id} className={`bg-white/5 rounded-xl p-5 border transition-all ${
+                      quizSubmitted && quizAnswers[q.id] === q.correctIndex ? 'border-green-500/30' :
+                      quizSubmitted && quizAnswers[q.id] !== q.correctIndex ? 'border-red-500/30' :
+                      'border-transparent'
+                    }`}>
+                      <div className="flex items-start gap-4 mb-4">
+                        <span className="w-8 h-8 rounded-full text-sm font-bold flex items-center justify-center shrink-0" style={{ background: `${subject.hex}20`, color: subject.hex }}>
+                          Q{idx + 1}
+                        </span>
+                        <p className="text-white font-medium text-lg leading-snug pt-1">{q.question}</p>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 gap-2 ml-12">
                         {q.options.map((opt, optIdx) => {
                           const isSelected = quizAnswers[q.id] === optIdx;
                           const isCorrect = quizSubmitted && optIdx === q.correctIndex;
                           const isWrong = quizSubmitted && isSelected && optIdx !== q.correctIndex;
+                          
+                          let btnClass = 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 hover:text-white';
+                          if (quizSubmitted) {
+                            if (isCorrect) btnClass = 'bg-green-500/20 border border-green-500/50 text-green-300';
+                            else if (isWrong) btnClass = 'bg-red-500/20 border border-red-500/50 text-red-300';
+                            else btnClass = 'bg-black/20 border border-transparent text-slate-500 opacity-50';
+                          } else if (isSelected) {
+                            btnClass = 'bg-blue-600/20 border-l-4 border-y border-r border-blue-500 text-white';
+                          }
+
                           return (
                             <button
                               key={optIdx}
                               onClick={() => { if (!quizSubmitted) setQuizAnswers({ ...quizAnswers, [q.id]: optIdx }); }}
                               disabled={quizSubmitted}
-                              className={`text-left px-3 py-2 rounded-lg text-sm border transition-all ${
-                                isCorrect ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300' :
-                                isWrong ? 'bg-red-500/20 border-red-500/40 text-red-300' :
-                                isSelected ? 'bg-white/10 border-white/30 text-white' :
-                                'border-white/10 text-slate-400 hover:bg-white/5 hover:text-white'
-                              }`}
+                              className={`text-left px-5 py-3 rounded-lg text-sm font-medium transition-all flex items-center gap-3 ${btnClass}`}
                             >
-                              <span className="font-bold mr-2">{String.fromCharCode(65 + optIdx)}.</span>
+                              <span className={`w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold ${
+                                quizSubmitted && isCorrect ? 'bg-green-500' :
+                                quizSubmitted && isWrong ? 'bg-red-500' :
+                                isSelected ? 'bg-blue-500 text-white' : 'bg-black/30'
+                              }`}>
+                                {String.fromCharCode(65 + optIdx)}
+                              </span>
                               {opt}
                             </button>
                           );
                         })}
                       </div>
+                      
+                      {quizSubmitted && q.explanation && (
+                        <div className="ml-12 mt-4 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                          <p className="text-sm text-blue-300"><span className="font-bold mr-1">Explanation:</span> {q.explanation}</p>
+                        </div>
+                      )}
                     </div>
                   ))}
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-center pt-4">
                     {!quizSubmitted ? (
                       <button
-                        onClick={() => setQuizSubmitted(true)}
+                        onClick={handleQuizSubmit}
                         disabled={Object.keys(quizAnswers).length < quizQuestions.length}
-                        className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm transition-all disabled:opacity-30"
+                        className="px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition-all disabled:opacity-30 disabled:scale-100 hover:scale-105"
                       >
                         Submit Quiz
                       </button>
                     ) : (
-                      <div className="flex items-center gap-4">
-                        <div className={`text-lg font-bold ${quizScore === quizQuestions.length ? 'text-emerald-400' : quizScore >= quizQuestions.length / 2 ? 'text-amber-400' : 'text-red-400'}`}>
-                          Score: {quizScore}/{quizQuestions.length}
-                        </div>
-                        <button
-                          onClick={() => { setQuizAnswers({}); setQuizSubmitted(false); }}
-                          className="px-4 py-2 rounded-xl bg-white/5 text-slate-300 font-bold text-sm border border-white/10"
-                        >
-                          Retry
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => { setQuizAnswers({}); setQuizSubmitted(false); setQuizScore(0); }}
+                        className="px-8 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold transition-all"
+                      >
+                        Retake Quiz
+                      </button>
                     )}
                   </div>
                 </>
               ) : (
-                <div className="text-center py-8">
-                  <Brain size={48} className="text-slate-700 mx-auto mb-4" />
-                  <p className="text-slate-400">Quiz questions for this experiment will be added soon.</p>
-                  <p className="text-slate-500 text-sm mt-2">Review the Viva Questions tab for practice.</p>
+                <div className="glass-panel p-12 text-center rounded-2xl flex flex-col items-center justify-center border border-white/5">
+                  <Brain size={48} className="text-slate-700 mb-4" />
+                  <p className="text-slate-400 font-medium">Quiz questions for this experiment will be added soon.</p>
                 </div>
               )}
             </div>
@@ -490,6 +653,7 @@ const LabView: React.FC = () => {
         {/* Navigation: Previous / Next */}
         <div className="flex items-center justify-between mt-8 max-w-4xl">
           <button
+            type="button"
             onClick={goPrev}
             disabled={tabIdx === 0}
             className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white/5 border border-white/10 text-sm font-bold transition-all hover:bg-white/10 disabled:opacity-20 disabled:cursor-not-allowed"
@@ -502,6 +666,7 @@ const LabView: React.FC = () => {
           </span>
 
           <button
+            type="button"
             onClick={goNext}
             disabled={tabIdx === TABS.length - 1}
             className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold transition-all hover:scale-105 disabled:opacity-20 disabled:cursor-not-allowed"

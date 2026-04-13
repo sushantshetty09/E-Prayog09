@@ -18,6 +18,7 @@ export interface QuizQuestion {
   question: string;
   options: string[];
   correctIndex: number;
+  explanation?: string;
 }
 
 export interface ObservationTable {
@@ -84,4 +85,22 @@ export interface ChatMessage {
 export interface NavItem {
   label: string;
   path: string;
+}
+
+export interface UserProfile {
+  id: string;
+  full_name: string;
+  email: string;
+  role: string;
+  grade?: string;
+  syllabus?: string;
+  institution?: string;
+  language?: string;
+  avatar?: string;
+  progress?: Record<string, number>;
+  notes?: string;
+  recent_lab_id?: string;
+  recent_subject_id?: string;
+  class_code?: string;
+  teacher_code?: string;
 }
